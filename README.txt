@@ -1,0 +1,1 @@
+mysql -u retro_user -p retro_social < sql/schema.sql // мигрируем базу данных
