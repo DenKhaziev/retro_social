@@ -6,3 +6,16 @@ function render($tpl, $vars = []) {
 function redirect($url) {
     header('Location: '.$url); exit;
 }
+
+function pretty_var_dump($variable) {
+    echo '<pre style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; font-family: monospace; color: #333;">';
+    var_dump($variable);  // Это основной вывод переменной
+    echo '</pre>';
+}
+
+function find_user(int $id): ?array {
+    $stmt = db_query("SELECT id, login FROM users WHERE id = ?", [$id]);
+    $row = $stmt->get_result()->fetch_assoc();
+    return $row ?: null;
+}
+

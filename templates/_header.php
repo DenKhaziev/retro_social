@@ -3,7 +3,7 @@
   "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-  <title><?= isset($title)?e($title):'Retro Social' ?></title>
+  <title><?= isset($title)?e($title):"95's Social Network" ?></title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel="stylesheet" type="text/css" href="/assets/css/base.css">
 <!--[if IE]><link rel="stylesheet" type="text/css" href="/assets/css/ie5.css"><![endif]-->
@@ -11,9 +11,9 @@
 <body>
 <div id="page">
     <div id="header">
-        <h1><a href="/feed">Retro Social</a></h1>
+        <h1><a href="/profile">95's Social Network</a></h1>
         <ul id="nav">
-            <li><a href="/feed">Главная</a></li>
+            <li><a href="/profile">Главная</a></li>
             <?php if (current_user_id()): ?>
                 <li><a href="/logout">Выход</a></li>
             <?php else: ?>
