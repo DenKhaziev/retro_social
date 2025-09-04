@@ -1,4 +1,9 @@
 <?php
+
+function h($str)
+{
+    return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8');
+}
 function render($tpl, $vars = []) {
     extract($vars, EXTR_SKIP);
     include __DIR__.'/../templates/'.$tpl.'.php';
@@ -27,4 +32,6 @@ function search_users($query) {
     $stmt = db_query('SELECT id, login, avatar_path, email FROM users WHERE login LIKE ? OR email LIKE ?', [$query, $query]);
     return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
+
+
 

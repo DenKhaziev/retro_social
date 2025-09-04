@@ -27,6 +27,10 @@ function get_user_profile(int $userId): array
     $row = $stmt->get_result()->fetch_assoc();
     if ($row) $photosCount = (int)$row['c'];
 
+    // Сами фотографии (можно ограничить последние 5, например)
+//    $stmt = db_query("SELECT id, file_path, created_at FROM photos WHERE user_id=? ORDER BY created_at", [$userId]);
+//    $photos = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
     $unreadCount = 0;
     $stmt = db_query("SELECT COUNT(*) AS c FROM messages WHERE receiver_id=? AND read_at IS NULL", [$userId]);
     $row = $stmt->get_result()->fetch_assoc();
@@ -38,6 +42,7 @@ function get_user_profile(int $userId): array
         'friendsCount' => $friendsCount,
         'photosCount' => $photosCount,
         'unreadCount' => $unreadCount,
+//        'photos' => $photos,
     ];
 }
 
