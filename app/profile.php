@@ -7,7 +7,7 @@ function get_user_profile(int $userId): array
 {
     // Запрос данных профиля пользователя
     $stmt = db_query('
-        SELECT u.id, u.login, u.avatar_path,
+        SELECT u.id, u.login, u.email, u.avatar_path,
                COALESCE(p.name, u.login) AS name,
                p.gender, p.birthdate, p.location, p.website, p.bio
         FROM users u

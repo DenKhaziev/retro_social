@@ -24,7 +24,7 @@ function search_users($query) {
     $query = '%' . $query . '%';
 
     // Поиск по имени и email
-    $stmt = db_query('SELECT id, login, email FROM users WHERE login LIKE ? OR email LIKE ?', [$query, $query]);
+    $stmt = db_query('SELECT id, login, avatar_path, email FROM users WHERE login LIKE ? OR email LIKE ?', [$query, $query]);
     return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
 
