@@ -64,3 +64,19 @@ function register_user($login, $email, $password)
 
     return true;
 }
+
+function get_profile_user_id(): ?int {
+    // 1) если роутер положил user_id в GET — отлично
+    if (isset($_GET['user_id'])) {
+        return (int)$_GET['user_id'];
+    }
+
+    // 2) попытка вытащить из REQUEST_URI на всякий
+    $uriPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    if (preg_match('#^/photos/(\d+)$#', $uriPath, $m)) {
+        return (int)$m[1];
+    }
+
+    // 3) иначе показываем собственные фото
+    return current_user_id();
+}
