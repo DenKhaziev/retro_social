@@ -1,4 +1,5 @@
-
+<?php
+?>
 <h2>Настройки</h2>
 
 <div class="cols">
@@ -16,7 +17,14 @@
 
   <div class="col-center">
     <div class="card">
-      <div class="card-h">Аватар</div>
+        <div class="card-h">Фотография профиля</div>
+        <div class="avatar-box">
+            <?php if (!empty($profileData['avatar_path'])): ?>
+                <img src="<?= ($profileData['avatar_path']) ?>" alt="Аватар" width="200" height="200">
+            <?php else: ?>
+                <img src="/assets/img/default.jpg" alt="">
+            <?php endif; ?>
+        </div>
       <div class="card-b">
         <?php if (!empty($error)): ?>
           <p style="color:#b00;"><?= e($error) ?></p>

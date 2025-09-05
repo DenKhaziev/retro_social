@@ -39,7 +39,7 @@ a:hover { text-decoration:none; }
 .col-right  { float:left;  width:240px; margin-left:10px; }
 
 /* ===== КАРТОЧКИ ===== */
-.card { border:1px solid #ddd; background:#fff; margin-bottom:10px; }
+.card { border:1px solid #ddd; background:#fff; margin:10px 0 10px 0; }
 .card-h { background:#f5f5f5; border-bottom:1px solid #ddd; padding:6px 8px; font-weight:bold; }
 .card-b { padding:8px; }
 
@@ -72,7 +72,7 @@ a:hover { text-decoration:none; }
 .form-row { margin-bottom:8px; }
 .label { display:block; font-weight:bold; margin-bottom:3px; }
 .input { width: 150px; padding:3px; border:1px solid #aaa; }
-.button { padding:4px 10px; border:1px solid #888; background:#eee; cursor:pointer; }
+.button {display: inline-block;  padding:4px 10px; border:1px solid #888; background:#eee; cursor:pointer; margin:3px;}
 
 /* ===== ДЕКОР ===== */
 .stats { list-style:none; margin:0; padding:0; }
@@ -110,5 +110,165 @@ a:hover { text-decoration:none; }
 .img-wrapper{
     height: 270px;
 }
+
+/* ===== СТИЛИ ДЛЯ ПОИСКА ===== */
+.search-form {
+    padding: 15px;
+    background: #fafafa;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.search-form input[type="text"] {
+    width: 220px;
+    padding: 5px;
+    border: 1px solid #aaa;
+    font-size: 14px;
+}
+
+.search-form input[type="submit"] {
+    padding: 5px 10px;
+    border: 1px solid #888;
+    background: #eee;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.search-form input[type="submit"]:hover {
+    background: #ccc;
+}
+
+/* ===== РЕЗУЛЬТАТЫ ПОИСКА ===== */
+.search-results {
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    list-style: none;
+}
+
+.search-results li {
+    margin-bottom: 12px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+
+.search-results li:hover {
+    background: #f1f1f1;
+}
+
+.search-results .user-info {
+    font-weight: bold;
+    color: #333;
+}
+
+.search-results .user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.search-results a {
+    text-decoration: none;
+    color: #333;
+}
+
+.search-results a:hover {
+    color: #06c; /* Цвет для кликабельной ссылки при наведении */
+}
+
+/* БЛОК СООБЩЕНИЙ*/
+.msg-in { background: #f0f0f0; margin: 10px 0; padding: 8px; border-radius: 5px; text-align: left; }
+.msg-out { background: #d0f0ff; margin: 10px 0; padding: 8px; border-radius: 5px; text-align: right; }
+.msg-meta { font-size: 12px; color: #888; margin-top: 5px; }
+.message-thread {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.message-thread li {
+    padding: 8px;
+    margin-bottom: 6px;
+    border-radius: 5px;
+    max-width: 70%;
+}
+.message-thread li.me {
+    background: #66b2ff;
+    margin-left: auto;
+}
+.message-thread li.them {
+    background: #f0f0f0;
+}
+.msg-meta {
+    font-size: 11px;
+    color: #666;
+    text-align: right;
+    margin-top: 5px;
+}
+.dialogs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.dialogs-table td {
+    border-bottom: 1px solid #ccc;
+    padding: 6px;
+}
+
+.dialogs-table a {
+    text-decoration: none;
+    color: #000;
+}
+
+.dialogs-table .date {
+    font-size: 11px;
+    color: #888;
+}
+
+.dialogs-table .badge {
+    display: inline-block;
+    background: #f00;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 4px;
+    margin-left: 6px;
+}
+
+/* СПИСОК ДРУЗЕЙ*/
+.friend-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin-bottom: 5px;
+}
+.friend-table th {
+    background-color: #eee;
+    text-align: left;
+    font-weight: bold;
+    padding: 6px;
+}
+.friend-table td {
+    padding: 6px;
+    vertical-align: middle;
+}
+.friend-table img {
+    width: 48px;
+    height: 48px;
+    vertical-align: middle;
+}
+.friend-table .login {
+    font-weight: bold;
+}
+.friend-table a {
+    color: #0000cc;
+    text-decoration: underline;
+    font-size: 11pt;
+}
+
 
 

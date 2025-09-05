@@ -1,27 +1,48 @@
 <?php
 
-//pretty_var_dump($currentUserId);
+//pretty_var_dump($user);
 // Функция для генерации кнопок
 function render_buttons($photo, $is_user_photo = false) {
+    $photoId = (int)$photo['id'];
+    $likesCount = (int)$photo['likes_count'];
+
     if ($is_user_photo) {
-        // Кнопки для своей фотки
-        echo '<button style="cursor: pointer" data-photo-id="' . htmlspecialchars($photo['id']) . '">Лайки ' . $photo['likes_count'] . '</button>';
-        echo '<button style="cursor: pointer" data-photo-id="' . htmlspecialchars($photo['id']) . '">Комментарии</button>';
-        echo '<button style="cursor: pointer" data-photo-id="' . htmlspecialchars($photo['id']) . '">Удалить</button>';
+        // Лайки
+        echo '<form method="get" action="/photos/' . (int)$photo['user_id'] . '/photo/' . $photoId . '/likes" style="display:inline">';
+        echo '<input type="submit" value="Лайки (' . $likesCount . ')">';
+        echo '</form> ';
+
+        // Кнопка "Комментарии" (просмотр списка)
+        echo '<form method="get" action="/photos/' . (int)$photo['user_id'] . '/photo/' . (int)$photo['id'] . '/comments" style="display:inline">';
+        echo '<input type="submit" value="Комментарии">';
+        echo '</form> ';
+
+        // Удалить (форма)
+        echo '<form method="post" action="/photos/delete/' . $photoId . '" style="display:inline">';
+        echo '<input type="hidden" name="csrf" value="' . csrf_token() . '">';
+        echo '<input type="submit" value="Удалить">';
+        echo '</form>';
     } else {
-        // Кнопки для чужой фотки
-        echo '<button style="cursor: pointer" data-photo-id="' . htmlspecialchars($photo['id']) . '">Лайк ' . $photo['likes_count'] . '</button>';
-        echo '<button style="cursor: pointer" data-photo-id="' . htmlspecialchars($photo['id']) . '">Оставить комментарий</button>';
+        // Лайк
+        echo '<form method="post" action="/photos/like/' . $photoId . '" style="display:inline">';
+        echo '<input type="hidden" name="csrf" value="' . csrf_token() . '">';
+        echo '<input type="submit" value="Лайк (' . $likesCount . ')">';
+        echo '</form> ';
+
+        // Кнопка "Комментарии" (просмотр списка)
+        echo '<form method="get" action="/photos/' . (int)$photo['user_id'] . '/photo/' . (int)$photo['id'] . '/comments" style="display:inline">';
+        echo '<input type="submit" value="Комментарии">';
+        echo '</form> ';
     }
 }
 
 ?>
 
-    <h1>
+    <h1 style="margin-bottom: 10px">
         <?php if ($isOwner): ?>
             Мои фотографии
         <?php else: ?>
-            Фотографии пользователя <?= htmlspecialchars($user['login']) ?>
+            Фотографии пользователя <?= $user['login'] ?>
         <?php endif; ?>
     </h1>
 

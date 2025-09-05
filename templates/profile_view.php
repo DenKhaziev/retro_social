@@ -1,83 +1,72 @@
 <?php
-// Получаем данные текущего пользователя
-$uid = current_user_id();
+$currentUserId = current_user_id();
+$isOwner = $currentUserId === $uid;
+$viewedUser     = $profileData['user'];
+$friendsCount   = $profileData['friendsCount'];
+$photosCount    = $profileData['photosCount'];
+$unreadCount    = $profileData['unreadCount'];
+$myFriendsCount = $sidebarStats['friendsCount'];
+$myPhotosCount  = $sidebarStats['photosCount'];
+$myUnreadCount  = $sidebarStats['unreadCount'];
 
-$u = null;
-$stmt = db_query('
-    SELECT u.id, u.login, u.avatar_path, u.email,
-           COALESCE(p.name, u.login) AS name,
-           p.location, p.website, p.bio
-    FROM users u
-    LEFT JOIN user_profiles p ON p.user_id = u.id
-    WHERE u.id = ? LIMIT 1
-', array($uid));
-$u = $stmt->get_result()->fetch_assoc();
-
-// Счётчики
-$friendsCount = 0;
-$stmt = db_query("SELECT COUNT(*) AS c FROM friendships WHERE status='accepted' AND (user_id=? OR friend_id=?)", array($uid,$uid));
-$row = $stmt->get_result()->fetch_assoc(); if ($row) $friendsCount = (int)$row['c'];
-
-$photosCount = 0;
-$stmt = db_query("SELECT COUNT(*) AS c FROM photos WHERE user_id=?", array($uid));
-$row = $stmt->get_result()->fetch_assoc(); if ($row) $photosCount = (int)$row['c'];
-
-$unreadCount = 0;
-$stmt = db_query("SELECT COUNT(*) AS c FROM messages WHERE receiver_id=? AND read_at IS NULL", array($uid));
-$row = $stmt->get_result()->fetch_assoc(); if ($row) $unreadCount = (int)$row['c'];
-
-// Утилитки
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 ?>
+
 <div class="cols"><!-- clearfix -->
 
-    <!-- Левая колонка: табы -->
+    <!-- Левая колонка: табы залогиненного пользователя -->
     <div class="col-left">
         <div class="card">
             <div class="card-h">Навигация</div>
             <div class="card-b">
                 <ul class="tab-nav">
-                    <li><a href="/profile/<?= (int)$uid ?>">Профиль</a></li>
-                    <li><a href="/photos/<?= (int)$uid ?>">Фотографии <span class="badge"><?= $photosCount ?></span></a></li>
-                    <li><a href="/friends">Друзья <span class="badge"><?= $friendsCount ?></span></a></li>
-                    <li><a href="/messages">Сообщения <span class="badge"><?= $unreadCount ?></span></a></li>
+                    <li><a href="/profile/show/<?= (int)$currentUserId ?>">Профиль (ред.) </a></li>
+                    <li><a href="/photos/<?= (int)$currentUserId ?>">Фотографии <span class="badge"><?= $myPhotosCount ?></span></a></li>
+                    <li><a href="/friends/<?= (int)$currentUserId ?>">Друзья <span class="badge"><?= $myFriendsCount ?></span></a></li>
+                    <li><a href="/messages"">Сообщения <span class="badge"><?= $myUnreadCount ?></span></a></li>
                     <li><a href="/search">Поиск людей</a></li>
                     <li><a href="/settings">Настройки</a></li>
                 </ul>
             </div>
         </div>
-
-        <div class="card">
-            <div class="card-h">Поиск</div>
-            <div class="card-b">
-                <form method="get" action="/search">
-                    <div class="form-row">
-                        <label class="label">Имя/логин</label>
-                        <input class="input" type="text" name="q" value="">
-                    </div>
-                    <input class="button" type="submit" value="Найти">
-                </form>
-            </div>
-        </div>
     </div>
 
-
-    <!-- Центр: квадратное фото -->
+    <!-- Центр: аватар -->
     <div class="col-center">
         <div class="card">
             <div class="card-h">Фотография профиля</div>
             <div class="card-b">
                 <div class="avatar-box">
-                    <?php if (!empty($u['avatar_path'])): ?>
-                        <img src="<?= h($u['avatar_path']) ?>" alt="Аватар" width="200" height="200">
+                    <?php if (!empty($viewedUser['avatar_path'])): ?>
+                        <img src="<?= h($viewedUser['avatar_path']) ?>" alt="Аватар" width="200" height="200">
                     <?php else: ?>
-                        <div class="avatar-placeholder">Нет фото</div>
+                        <img src="/assets/img/default.jpg" alt="">
                     <?php endif; ?>
                 </div>
 
-                <p class="mt8">
-                    <a class="button" href="/settings">Загрузить/сменить фото</a>
-                </p>
+                <?php if ($isOwner): ?>
+                    <p class="mt8">
+                        <a class="button" href="/settings">Загрузить/сменить фото</a>
+                    </p>
+                <?php else: ?>
+                    <p class="mt8">
+                        <a class="button" href="/messages/<?= (int)$viewedUser['id'] ?>">Написать сообщение</a>
+                    </p>
+                    <?php if ($uid !== current_user_id()): ?>
+                        <?php
+                        $status = get_friendship_status(current_user_id(), $uid);
+                        if ($status === null): ?>
+                            <form method="post" action="/friends/add">
+                                <input type="hidden" name="csrf" value="<?= csrf_token() ?>">
+                                <input type="hidden" name="friend_id" value="<?= (int)$uid ?>">
+                                <input class="button" type="submit" value="Добавить в друзья">
+                            </form>
+                        <?php elseif ($status === 'pending'): ?>
+                            <p class="button">Запрос отправлен</p>
+                        <?php elseif ($status === 'accepted'): ?>
+                            <p class="button">Уже в друзьях</p>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -85,43 +74,39 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
             <div class="card-h">Коротко</div>
             <div class="card-b">
                 <ul class="stats">
-                    <li><b><?= $friendsCount ?></b> друзей</li>
-                    <li><b><?= $photosCount ?></b> фото</li>
-                    <li><b><?= $unreadCount ?></b> непроч. сообщений</li>
+                    <?php if ($isOwner): ?>
+                        <li><b><?= $friendsCount ?></b> друзей</li>
+                        <li><b><?= $photosCount ?></b> фото</li>
+                        <li><b><?= $unreadCount ?></b> непроч. сообщений</li>
+                    <?php else: ?>
+                        <a href="/friends/<?= (int)$viewedUser['id'] ?>"><li><b><?= $friendsCount ?></b> друзей</li></a>
+                        <a href="/photos/<?= (int)$viewedUser['id'] ?>"><b><?= $photosCount ?></b> фото</a>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
     </div>
 
-    <!-- Правая: личные данные -->
+    <!-- Правая колонка: профиль пользователя -->
     <div class="col-right">
         <div class="card">
-            <div class="card-h"><?= h($u ? $u['name'] : 'Пользователь') ?></div>
+            <div class="card-h"><?= h($viewedUser['name']) ?></div>
             <div class="card-b">
                 <dl class="info-list">
-                    <dt>e-mail:</dt><dd><?= h($u['email']) ?></dd>
-                    <?php if (!empty($u['location'])): ?>
-                        <dt>Город:</dt><dd><?= h($u['location']) ?></dd>
+                    <dt>e-mail:</dt><dd><?= h($viewedUser['email']) ?></dd>
+                    <?php if (!empty($viewedUser['location'])): ?>
+                        <dt>Город:</dt><dd><?= h($viewedUser['location']) ?></dd>
                     <?php endif; ?>
-                    <?php if (!empty($u['website'])): ?>
-                        <dt>Сайт:</dt><dd><a href="<?= h($u['website']) ?>" target="_blank"><?= h($u['website']) ?></a></dd>
+                    <?php if (!empty($viewedUser['website'])): ?>
+                        <dt>Сайт:</dt><dd><a href="<?= h($viewedUser['website']) ?>" target="_blank"><?= h($viewedUser['website']) ?></a></dd>
                     <?php endif; ?>
-                    <?php if (!empty($u['bio'])): ?>
-                        <dt>О себе:</dt><dd><?= h($u['bio']) ?></dd>
+                    <?php if (!empty($viewedUser['bio'])): ?>
+                        <dt>О себе:</dt><dd><?= h($viewedUser['bio']) ?></dd>
                     <?php endif; ?>
                 </dl>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-h">Быстрые ссылки</div>
-            <div class="card-b">
-                <ul class="link-list">
-                    <li><a href="/user/<?= (int)$uid ?>">Мой профиль</a></li>
-                    <li><a href="/friends">Мои друзья</a></li>
-                    <li><a href="/photos">Мои фото</a></li>
-                    <li><a href="/messages">Личные сообщения</a></li>
-                </ul>
+                <?php if ($isOwner): ?>
+                    <p class="mt8"><a class="button" href="/profile/edit">Редактировать</a></p>
+                <?php endif; ?>
             </div>
         </div>
     </div>

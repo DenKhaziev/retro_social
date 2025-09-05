@@ -2,7 +2,6 @@
 <?php
 $uid = current_user_id();
 $u = profile_find($uid);
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 $errors = isset($errors) && is_array($errors) ? $errors : [];
 ?>
 <h2>Редактирование профиля</h2>
