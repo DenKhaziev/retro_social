@@ -80,3 +80,39 @@ function upload_photo(array $file, int $userId): string
     // успех — вернём относительный путь (можно использовать для предпросмотра)
     return '/' . $relPath;
 }
+
+function photo_find(int $photoId): ?array
+{
+    $stmt = db_query("SELECT id, user_id, file_path FROM photos WHERE id = ? LIMIT 1", [$photoId]);
+    $row = $stmt->get_result()->fetch_assoc();
+    return $row ?: null;
+}
+
+/**
+ * Полное удаление фотографии с проверкой прав.
+ * Возвращает ['ok' => bool, 'error' => string|null]
+ */
+function photo_delete(int $photoId, int $currentUserId): array
+{
+    $photo = photo_find($photoId);
+    if (!$photo) {
+        return ['ok' => false, 'error' => 'not_found'];
+    }
+
+    if ((int)$photo['user_id'] !== (int)$currentUserId) {
+        return ['ok' => false, 'error' => 'forbidden'];
+    }
+
+    db_query("DELETE FROM photo_likes WHERE photo_id = ?", [$photoId]);
+
+    db_query("DELETE FROM photos WHERE id = ?", [$photoId]);
+
+    $root = dirname(__DIR__); // /app -> проект
+    $filePath = $root . '/public/' . ltrim($photo['file_path'], '/');
+
+    if (is_file($filePath)) {
+        @unlink($filePath);
+    }
+
+    return ['ok' => true, 'error' => null];
+}
