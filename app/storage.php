@@ -24,7 +24,6 @@ function public_upload_path_to_url($absPath)
 
 function save_uploaded_avatar(array $file, int $uid)
 {
-    // базовые проверки
     if (!isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK) {
         return 'Ошибка загрузки файла';
     }
@@ -32,13 +31,11 @@ function save_uploaded_avatar(array $file, int $uid)
         return 'Некорректный файл';
     }
 
-    // ограничения
     $maxBytes = 3 * 1024 * 1024; // 3MB
     if ($file['size'] > $maxBytes) {
         return 'Файл слишком большой (макс. 3 МБ)';
     }
 
-    // MIME + размер
     $fi = new finfo(FILEINFO_MIME_TYPE);
     $mime = $fi->file($file['tmp_name']);
     if (!in_array($mime, ['image/jpeg', 'image/pjpeg', 'image/gif'], true)) {
@@ -48,7 +45,6 @@ function save_uploaded_avatar(array $file, int $uid)
     if (!$info) return 'Не удалось прочитать изображение';
     list($w, $h) = $info;
 
-    // грузим в GD
     if ($mime === 'image/gif') {
         $src = @imagecreatefromgif($file['tmp_name']);
     } else {

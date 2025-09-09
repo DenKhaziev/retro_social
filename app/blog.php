@@ -3,10 +3,9 @@ function get_user_posts(int $userId): array {
     return db_query('
         SELECT p.*,
                COUNT(DISTINCT c.id) AS comments_count,
-               COUNT(DISTINCT l.user_id) AS likes_count
+               0 AS likes_count
         FROM blog_posts p
         LEFT JOIN blog_comments c ON c.post_id = p.id
-        LEFT JOIN blog_likes    l ON l.post_id = p.id
         WHERE p.user_id = ? AND p.is_draft = 0
         GROUP BY p.id
         ORDER BY p.created_at DESC
@@ -14,11 +13,30 @@ function get_user_posts(int $userId): array {
 }
 
 function get_post(int $postId): ?array {
-    $row = db_query('SELECT * FROM blog_posts WHERE id=? LIMIT 1', [$postId])->get_result()->fetch_assoc();
+    $stmt = db_query('
+        SELECT p.*,
+               (SELECT COUNT(*) FROM blog_comments bc WHERE bc.post_id = p.id) AS comments_count,
+               0 AS likes_count
+        FROM blog_posts p
+        WHERE p.id = ?
+        LIMIT 1
+    ', [$postId]);
+    $row = $stmt->get_result()->fetch_assoc();
     return $row ?: null;
 }
-function inc_post_view(int $postId): void {
-    db_query('UPDATE blog_posts SET views_count = views_count + 1 WHERE id=?', [$postId]);
+function inc_post_view(int $postId, int $currentUserId): void {
+    // достанем владельца поста
+    $stmt = db_query('SELECT user_id FROM blog_posts WHERE id=? LIMIT 1', [$postId]);
+    $row = $stmt->get_result()->fetch_assoc();
+
+    if (!$row) {
+        return;
+    }
+
+    // если зашёл не автор — увеличиваем просмотры
+    if ((int)$row['user_id'] !== (int)$currentUserId) {
+        db_query('UPDATE blog_posts SET views_count = views_count + 1 WHERE id=?', [$postId]);
+    }
 }
 
 function get_post_comments(int $postId): array {
@@ -38,3 +56,5 @@ function add_post_comment(int $postId, int $userId, string $body): bool {
         [$postId, $userId, $body]);
     return true;
 }
+
+

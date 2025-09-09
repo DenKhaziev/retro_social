@@ -38,7 +38,7 @@
         </tr>
         <?php foreach ($pending as $p): ?>
             <tr>
-                <td><img src="<?= h($p['avatar_path']) ?>" width="40" height="40" alt=""></td>
+                <td><img src="<?= h($p['avatar_path']?: '/assets/img/default.jpg') ?>" width="40" height="40" alt=""></td>
                 <td><a href="/profile/<?= (int)$p['requester_id'] ?>"><?= h($p['login']) ?></a></td>
                 <td>
                     <a href="/friends/accept/<?= (int)$p['requester_id'] ?>">Принять</a> |

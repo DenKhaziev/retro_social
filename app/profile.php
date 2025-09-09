@@ -2,7 +2,6 @@
 
 require_once __DIR__ . '/db.php';
 
-// Функция для получения данных профиля
 function get_user_profile(int $userId): array
 {
     // Запрос данных профиля пользователя
@@ -16,7 +15,6 @@ function get_user_profile(int $userId): array
     ', [$userId]);
     $user = $stmt->get_result()->fetch_assoc();
 
-    // Получаем дополнительные данные (друзья, фото, сообщения)
     $friendsCount = 0;
     $stmt = db_query("SELECT COUNT(*) AS c FROM friendships WHERE status='accepted' AND (user_id=? OR friend_id=?)", [$userId, $userId]);
     $row = $stmt->get_result()->fetch_assoc();
@@ -27,26 +25,30 @@ function get_user_profile(int $userId): array
     $row = $stmt->get_result()->fetch_assoc();
     if ($row) $photosCount = (int)$row['c'];
 
-    // Сами фотографии (можно ограничить последние 5, например)
-//    $stmt = db_query("SELECT id, file_path, created_at FROM photos WHERE user_id=? ORDER BY created_at", [$userId]);
-//    $photos = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
     $unreadCount = 0;
     $stmt = db_query("SELECT COUNT(*) AS c FROM messages WHERE receiver_id=? AND read_at IS NULL", [$userId]);
     $row = $stmt->get_result()->fetch_assoc();
     if ($row) $unreadCount = (int)$row['c'];
 
-    // Возвращаем все данные профиля
+    $pendingCount = 0;
+    $stmt = db_query("
+    SELECT COUNT(*) AS c
+    FROM friendships
+    WHERE friend_id = ? AND status = 'pending'
+", [$userId]);
+    $row = $stmt->get_result()->fetch_assoc();
+    $pendingCount = (int)$row['c'];
+
     return [
         'user' => $user,
         'friendsCount' => $friendsCount,
         'photosCount' => $photosCount,
         'unreadCount' => $unreadCount,
-//        'photos' => $photos,
+        'pendingCount' => $pendingCount,
     ];
 }
 
-// Функция для обновления профиля
+
 function profile_update(int $userId, array $data): array
 {
     $errors = [];
@@ -89,7 +91,6 @@ function profile_update(int $userId, array $data): array
         return ['ok' => false, 'errors' => $errors];
     }
 
-    // Запись в user_profiles (если записи нет, то добавляем, если есть — обновляем)
     $now = date('Y-m-d H:i:s');
     db_query('
         INSERT INTO user_profiles (user_id, name, updated_at)

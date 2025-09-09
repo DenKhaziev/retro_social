@@ -9,7 +9,6 @@
       <div class="card-b">
         <ul class="tab-nav">
           <li><a href="/profile">Мой профиль</a></li>
-<!--          <li><a href="/settings">Уведомления</a></li>-->
         </ul>
       </div>
     </div>

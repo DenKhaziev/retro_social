@@ -4,7 +4,7 @@
 <form method="post" action="/register">
   <input type="hidden" name="csrf" value="<?=csrf_token()?>">
   <div class="form-row">
-    <label class="label">Логин</label>
+    <label class="label">Логин (никнейм)</label>
     <input class="input" type="text" name="login" maxlength="32">
   </div>
   <div class="form-row">

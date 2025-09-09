@@ -14,6 +14,7 @@ require __DIR__ . '/../app/messages.php';
 require __DIR__ . '/../app/friends.php';
 require __DIR__ . '/../app/photo_likes.php';
 require __DIR__ . '/../app/photo_comments.php';
+require __DIR__ . '/../app/blog.php';
 
 
 // ROUTE
@@ -46,10 +47,14 @@ if ($path === '/' || $path === '/profile') {
     $action = 'messages_send';
 } elseif ($path === '/friends/add') {
     $action = 'friends_add';
+} elseif ($path === '/forgot') {
+    $action = 'forgot';
+} elseif ($path === '/reset') {
+    $action = 'reset';
 } elseif (preg_match('#^/photos/(\d+)/photo/(\d+)/likes$#', $path, $m)) {
     $action = 'photo_likes';
-    $_GET['user_id'] = (int)$m[1];   // владелец фото
-    $_GET['photo_id'] = (int)$m[2];  // фото
+    $_GET['user_id'] = (int)$m[1];
+    $_GET['photo_id'] = (int)$m[2];
 } elseif (preg_match('#^/messages/(\d+)$#', $path, $m)) {
     $action = 'message_thread';
     $_GET['user_id'] = (int)$m[1];
@@ -87,6 +92,21 @@ if ($path === '/' || $path === '/profile') {
     $action = 'photo_comment_add';
     $_GET['user_id']  = (int)$m[1];
     $_GET['photo_id'] = (int)$m[2];
+} elseif (preg_match('#^/blog/(\d+)$#', $path, $m)) {
+    $action = 'blog_index'; $_GET['user_id'] = (int)$m[1];
+} elseif (preg_match('#^/blog/(\d+)/post/(\d+)$#', $path, $m)) {
+    $action = 'blog_show'; $_GET['user_id'] = (int)$m[1]; $_GET['post_id'] = (int)$m[2];
+} elseif ($path === '/blog/create') {
+    $action = 'blog_create';
+} elseif (preg_match('#^/blog/(\d+)/post/(\d+)/comments$#', $path, $m)) {
+    $action = 'blog_comments'; $_GET['user_id'] = (int)$m[1]; $_GET['post_id'] = (int)$m[2];
+} elseif (preg_match('#^/blog/(\d+)/post/(\d+)/comment/add$#', $path, $m)) {
+    $action = 'blog_comment_add'; $_GET['user_id'] = (int)$m[1]; $_GET['post_id'] = (int)$m[2];
+} elseif (preg_match('#^/blog/delete/(\d+)$#', $path, $m)) {
+    $action = 'blog_delete'; $_GET['post_id'] = (int)$m[1];
+} elseif (preg_match('#^/blog/like/(\d+)$#', $path, $m)) {
+    $action = 'blog_like_toggle'; $_GET['post_id'] = (int)$m[1];
+
 } else {
     $action = $_GET['a'] ?? 'profile';
 }
@@ -224,6 +244,114 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         redirect('/photos/' . $ownerId . '/photo/' . $photoId . '/comments');
     }
+    // BLOG
+    elseif ($action === 'blog_create') { // POST создание
+        $userId = current_user_id();
+        $title  = trim((string)post('title'));
+        $body   = trim((string)post('body'));
+        $isDraft    = (int)(post('is_draft') ? 1 : 0);
+        $visibility = (int)(post('visibility') ?? 0);
+        if ($title !== '' && $body !== '') {
+            db_query("INSERT INTO blog_posts (user_id, title, body, created_at, updated_at, is_draft, visibility)
+                  VALUES (?, ?, ?, NOW(), NOW(), ?, ?)", [$userId,$title,$body,$isDraft,$visibility]);
+        }
+        redirect('/blog/' . $userId);
+    }
+    elseif ($action === 'blog_delete') {
+        $userId = current_user_id();
+        $postId = (int)($_GET['post_id'] ?? 0);
+        $post = get_post($postId);
+        if (!$post) { http_response_code(404); render('errors/404'); }
+        if ((int)$post['user_id'] !== $userId) { http_response_code(403); render('errors/403'); }
+        db_query("DELETE FROM blog_posts WHERE id=?", [$postId]); // каскадом удалит комменты/лайки по FK
+        redirect('/blog/' . $userId);
+    }
+    elseif ($action === 'blog_like_toggle') {
+        $userId = current_user_id();
+        $postId = (int)($_GET['post_id'] ?? 0);
+        toggle_post_like($postId, $userId); // app blog helper
+        // вернуть к посту
+        $post = get_post($postId);
+        $ownerId = $post ? (int)$post['user_id'] : $userId;
+        redirect('/blog/' . $ownerId . '/post/' . $postId);
+    }
+    elseif ($action === 'blog_comment_add') {
+        $currentUserId = current_user_id();
+        $ownerId = (int)($_GET['user_id'] ?? 0);
+        $postId  = (int)($_GET['post_id'] ?? 0);
+        $body    = post('body');
+        add_post_comment($postId, $currentUserId, $body);
+        redirect('/blog/' . $ownerId . '/post/' . $postId );
+    }
+    elseif ($action === 'forgot') {
+        $email = trim((string)post('email'));
+
+        // Ищем пользователя
+        $stmt = db_query("SELECT id FROM users WHERE email = ? LIMIT 1", [$email]);
+        $user = $stmt->get_result()->fetch_assoc();
+
+        if ($user) {
+            // Генерим токен и TTL (1 час)
+            $token   = bin2hex(random_bytes(16));
+            $expires = date('Y-m-d H:i:s', time() + 3600);
+
+            db_query("UPDATE users SET reset_token = ?, reset_expires = ? WHERE id = ?", [$token, $expires, $user['id']]);
+
+            // Ссылка
+            $link = APP_BASE_URL . '/reset?token=' . urlencode($token);
+
+
+            $subject = 'Сброс пароля';
+            $body  = "Здравствуйте!\r\n\r\n";
+            $body .= "Вы запросили сброс пароля на сайте " . parse_url(APP_BASE_URL, PHP_URL_HOST) . ".\r\n";
+            $body .= "Перейдите по ссылке, чтобы задать новый пароль (ссылка активна 1 час):\r\n";
+            $body .= $link . "\r\n\r\n";
+            $body .= "Если вы не запрашивали сброс — просто игнорируйте это письмо.\r\n";
+
+            // Отправляем (ошибки можно логировать, но ответ пользователю — одинаковый)
+            send_mail_simple($email, $subject, $body);
+        }
+
+        // Всегда показываем одинаковый ответ (чтобы не палить, зарегистрирован email или нет)
+        redirect('/forgot?sent=1');
+    }
+    elseif ($action === 'reset') {
+        $token     = trim((string)post('token'));
+        $password  = (string)post('password');
+        $password2 = (string)post('password2');
+
+        // базовые проверки
+        if ($token === '') {
+            render('auth_reset', ['token' => '', 'error' => 'Неверная ссылка.']);
+            return;
+        }
+        if ($password === '' || $password !== $password2) {
+            render('auth_reset', ['token' => $token, 'error' => 'Пароли пустые или не совпадают.']);
+            return;
+        }
+
+        // хэш пароля
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+
+        // ОБНОВЛЯЕМ ПО САМОМУ ТОКЕНУ, с проверкой срока
+        $stmt = db_query("
+        UPDATE users
+        SET password_hash = ?, reset_token = NULL, reset_expires = NULL
+        WHERE reset_token = ? AND reset_expires > NOW()
+        LIMIT 1
+    ", [$hash, $token]);
+
+        // проверяем, сработало ли
+        if ($stmt && $stmt->affected_rows === 1) {
+            // успех — пароль применён, токен очищен
+            redirect('/login');
+        } else {
+            // не сработало: токен не найден/просрочен/уже использован
+            render('auth_reset', ['token' => '', 'error' => 'Ссылка недействительна или устарела.']);
+            return;
+        }
+    }
+
 
 }
 
@@ -241,7 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['photo'])) {
 if ($action === 'logout') { logout(); redirect('/login'); }
 
 // GUARD
-if (!in_array($action, ['login', 'register'])) login_required();
+if (!in_array($action, ['login', 'register', 'forgot', 'reset'])) login_required();
 
 // RENDER
 render('_header', ['title' => 'Retro Social']);
@@ -261,7 +389,7 @@ switch ($action) {
         $uid = $_GET['id'] ?? current_user_id();
         $profileData = get_user_profile($uid);
         $sidebarStats = get_user_profile(current_user_id());
-        render('profile_view', compact('uid', 'profileData', 'sidebarStats'));
+        render('profile_view', compact('uid', 'profileData', 'sidebarStats' ));
         break;
     case 'photo':
         $uid    = current_user_id();
@@ -301,8 +429,8 @@ switch ($action) {
         render('friends_list', [
             'user' => $user,
             'friends' => $friends,
-            'pending' => $pending,
             'isOwner' => $isOwner,
+            'pending' => $pending ,
         ]);
         break;
     case 'messages_index':
@@ -386,6 +514,49 @@ switch ($action) {
             'owner_id' => $ownerId ?: (int)$photo['user_id'],
             'comments' => $comments,
         ]);
+        break;
+    case 'blog_index':
+        $blogUserId = (int)($_GET['user_id'] ?? 0);
+        $blogUser   = find_user($blogUserId);
+        if (!$blogUser) { http_response_code(404); render('errors/404'); break; }
+        $posts = get_user_posts($blogUserId);
+        render('blog_index', ['user'=>$blogUser, 'posts'=>$posts]);
+        break;
+
+    case 'blog_show':
+        $ownerId = (int)($_GET['user_id'] ?? 0);
+        $postId  = (int)($_GET['post_id'] ?? 0);
+
+        $post = get_post($postId);              // см. функцию ниже
+        if (!$post || (int)$post['user_id'] !== $ownerId) {
+            http_response_code(404);
+            render('errors/404');
+            break;
+        }
+
+        inc_post_view($postId, current_user_id());               // инкремент просмотров
+
+        $comments = get_post_comments($postId); // список комментов
+        $isOwner  = (current_user_id() === (int)$post['user_id']);
+
+        render('blog_show', [
+            'post'     => $post,
+            'owner_id' => $ownerId,
+            'comments' => $comments,
+            'isOwner'  => $isOwner,
+        ]);
+        break;
+
+    case 'blog_create':
+        render('blog_create', ['error'=>$error ?? null]);
+        break;
+    case 'forgot':
+        render('auth_forgot', ['sent' => $_GET['sent'] ?? null]);
+        break;
+
+    case 'reset':
+        $token = trim($_GET['token'] ?? '');
+        render('auth_reset', ['token' => $token, 'error' => $error ?? null]);
         break;
 
 }

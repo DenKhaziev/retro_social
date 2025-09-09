@@ -36,7 +36,7 @@ $errors = isset($errors) && is_array($errors) ? $errors : [];
                     <input type="hidden" name="csrf" value="<?= csrf_token() ?>">
 
                     <div class="form-row">
-                        <label class="label">Имя *</label>
+                        <label class="label">Имя (можете указать реально имя)*</label>
                         <input class="input" type="text" name="name" maxlength="100" value="<?= h($u['name'] ?? '') ?>">
                     </div>
 

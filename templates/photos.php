@@ -5,6 +5,7 @@
 function render_buttons($photo, $is_user_photo = false) {
     $photoId = (int)$photo['id'];
     $likesCount = (int)$photo['likes_count'];
+    $commentsCount = (int)$photo['comments_count'];
 
     if ($is_user_photo) {
         // Лайки
@@ -14,7 +15,7 @@ function render_buttons($photo, $is_user_photo = false) {
 
         // Кнопка "Комментарии" (просмотр списка)
         echo '<form method="get" action="/photos/' . (int)$photo['user_id'] . '/photo/' . (int)$photo['id'] . '/comments" style="display:inline">';
-        echo '<input type="submit" value="Комментарии">';
+        echo '<input type="submit" value="Комментарии (' . $commentsCount . ')">';
         echo '</form> ';
 
         // Удалить (форма)

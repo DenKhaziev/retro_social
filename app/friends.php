@@ -1,6 +1,5 @@
 <?php
 
-// Получает массив друзей для пользователя (accepted связи)
 function get_user_friends(int $userId): array
 {
     $stmt = db_query("
@@ -45,5 +44,20 @@ function get_pending_friend_requests(int $userId): array
     ", [$userId]);
 
     return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+}
+
+function are_friends(int $userId1, int $userId2): bool {
+    if ($userId1 === $userId2) return true;
+    $stmt = db_query("
+        SELECT 1
+        FROM friendships
+        WHERE status = 'accepted'
+          AND (
+              (user_id = ? AND friend_id = ?)
+              OR (user_id = ? AND friend_id = ?)
+          )
+        LIMIT 1
+    ", [$userId1, $userId2, $userId2, $userId1]);
+    return (bool)$stmt->get_result()->fetch_row();
 }
 

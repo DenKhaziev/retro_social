@@ -8,6 +8,8 @@ $unreadCount    = $profileData['unreadCount'];
 $myFriendsCount = $sidebarStats['friendsCount'];
 $myPhotosCount  = $sidebarStats['photosCount'];
 $myUnreadCount  = $sidebarStats['unreadCount'];
+$pendingCount  = $sidebarStats['pendingCount'];
+
 
 ?>
 
@@ -21,7 +23,15 @@ $myUnreadCount  = $sidebarStats['unreadCount'];
                 <ul class="tab-nav">
                     <li><a href="/profile/show/<?= (int)$currentUserId ?>">Профиль (ред.) </a></li>
                     <li><a href="/photos/<?= (int)$currentUserId ?>">Фотографии <span class="badge"><?= $myPhotosCount ?></span></a></li>
-                    <li><a href="/friends/<?= (int)$currentUserId ?>">Друзья <span class="badge"><?= $myFriendsCount ?></span></a></li>
+                    <li><a href="/blog/<?= (int)$currentUserId ?>">Блог </a></li>
+
+                    <li><a href="/friends/<?= (int)$currentUserId ?>">Друзья <span class="badge"><?= $myFriendsCount ?>
+                            <?php if ($pendingCount): ?>
+                                </span><span class="badge">+ <?= $pendingCount ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
                     <li><a href="/messages"">Сообщения <span class="badge"><?= $myUnreadCount ?></span></a></li>
                     <li><a href="/search">Поиск людей</a></li>
                     <li><a href="/settings">Настройки</a></li>
@@ -79,6 +89,7 @@ $myUnreadCount  = $sidebarStats['unreadCount'];
                         <li><b><?= $photosCount ?></b> фото</li>
                         <li><b><?= $unreadCount ?></b> непроч. сообщений</li>
                     <?php else: ?>
+                        <a href="/blog/<?= (int)$viewedUser['id'] ?>"><li><b></b> блог <?= $viewedUser['login'] ?></li></a>
                         <a href="/friends/<?= (int)$viewedUser['id'] ?>"><li><b><?= $friendsCount ?></b> друзей</li></a>
                         <a href="/photos/<?= (int)$viewedUser['id'] ?>"><b><?= $photosCount ?></b> фото</a>
                     <?php endif; ?>

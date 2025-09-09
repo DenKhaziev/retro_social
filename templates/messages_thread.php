@@ -14,6 +14,7 @@
                         <div class="msg-meta"><?= h($msg['created_at']) ?></div>
                     </li>
                 <?php endforeach; ?>
+
             </ul>
         <?php endif; ?>
     </div>
